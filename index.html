@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Arsip MySAPA</title>
+  <!-- Bootstrap 5 CSS-->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+    }
+    /* Header Berkonsep BRImo (Deep Blue Gradient) */
+    .header-banner {
+      background: linear-gradient(135deg, #003366 0%, #00529c 50%, #0072ce 100%);
+      color: #ffffff;
+      padding: 35px 20px 75px 20px;
+      border-bottom-left-radius: 32px;
+      border-bottom-right-radius: 32px;
+      box-shadow: 0 10px 25px rgba(0, 51, 102, 0.25);
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .brand-box {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      transform: translateY(-10px);
+    }
+    .header-title-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 0;
+    }
+    .app-title {
+      font-weight: 800;
+      font-size: 18px;
+      margin: 2px 0 0 0;
+      line-height: 1.2;
+    }
+    .app-subtitle {
+      font-size: 14px;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+    .sync-badge {
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(4px);
+      flex-shrink: 0;
+    }
+    /* Main Container Dinaikkan Kebawah Header (Overlap Effect) */
+    .main-container {
+      max-width: 1200px;
+      margin: -50px auto 0 auto;
+      padding: 0 20px 20px 20px;
+      flex: 1;
+      width: 100%;
+      position: relative;
+      z-index: 5;
+    }
+    /* Summary Metric Cards (Tombol Navigasi Interaktif) */
+    .stat-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 14px 10px;
+      border: 2px solid transparent;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      height: 100%;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      user-select: none;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+    }
+    .stat-card.active {
+      background: linear-gradient(135deg, #00529c 0%, #0072ce 100%);
+      border: 2px solid transparent;
+      box-shadow: 0 10px 25px rgba(0, 82, 156, 0.35);
+    }
+    .stat-card.active .stat-title {
+      color: rgba(255, 255, 255, 0.88);
+    }
+    .stat-card.active .stat-value {
+      color: #ffffff;
+    }
+    .stat-card.active .stat-icon {
+      background-color: rgba(255, 255, 255, 0.22) !important;
+      color: #ffffff !important;
+    }
+    .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+    }
+    .stat-title {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin: 8px 0 0 0;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 4px 0 0 0;
+    }
+    /* Content Area */
+    .card-content {
+      background: transparent;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+    /* CONTAINER SCROLL HORIZONTAL */
+    .table-scroll-container {
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+    /* TABEL HORIZONTAL TRANSPOSE */
+    .custom-table-horizontal {
+      margin-bottom: 0;
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    /* Header Kolom Kiri */
+    .custom-table-horizontal th.sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background-color: #f8fafc !important;
+      color: #334155;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-right: 2px solid #cbd5e1;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 10px 14px;
+      width: 1%;
+      white-space: nowrap;
+      box-shadow: 3px 0 6px rgba(0, 0, 0, 0.04);
+      text-align: left;
+    }
+    /* Isi Sel Tabel */
+    .custom-table-horizontal td {
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      color: #334155;
+      text-align: left;
+      min-width: 180px;
+      border-right: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+      background-color: #ffffff;
+    }
+    .custom-table-horizontal tr:last-child th.sticky-col,
+    .custom-table-horizontal tr:last-child td {
+      border-bottom: none;
+    }
+    .badge-jenis {
+      background-color: #e0f2fe;
+      color: #0369a1;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      display: inline-block;
+    }
+    .btn-link-arsip {
+      background-color: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 5px 12px;
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-link-arsip:hover {
+      background-color: #2563eb;
+      color: #ffffff;
+    }
+    /* Search Box */
+    .search-box {
+      position: relative;
+    }
+    .search-box input {
+      border-radius: 12px;
+      padding-left: 40px;
+      border: 1px solid #cbd5e1;
+      background-color: #ffffff;
+    }
+    .search-box i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+    /* Loading Overlay */
+    #loadingSpinner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 50px 0;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Banner -->
+  <div class="header-banner">
+    <div class="header-container">
+      <div class="brand-box">
+        <div class="header-title-group">
+          <span class="app-subtitle">Pencatatan Dokumen</span>
+          <h3 class="app-title">Arsip Surat dan Inventaris</h3>
+        </div>
+        <div class="sync-badge">
+          <i class="fa-solid fa-arrows-rotate" id="syncIcon"></i>
+          <span>Live Sync 10s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- Top Summary Cards -->
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <div class="stat-card active" id="cardSurat" onclick="switchTab('surat')">
+          <div class="stat-icon bg-primary-subtle text-primary">
+            <i class="fa-solid fa-envelope"></i>
+          </div>
+          <div>
+            <p class="stat-title">Surat Menyurat</p>
+            <h3 class="stat-value" id="countSurat">0</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="stat-card" id="cardSP" onclick="switchTab('sp')">
+          <div class="stat-icon bg-success-subtle text-success">
+            <i class="fa-solid fa-file-signature"></i>
+          </div>
+          <div>
+            <p class="stat-title">Surat Pengantar</p>
+            <h3 class="stat-value" id="countSP">0</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="stat-card" id="cardInv" onclick="switchTab('inv')">
+          <div class="stat-icon bg-purple-subtle text-purple" style="background-color: #f3e8ff; color: #9333ea;">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <p class="stat-title">Inventaris RT</p>
+            <h3 class="stat-value" id="countInv">0</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Search Box -->
+    <div class="search-box mb-3">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="searchInput" class="form-control" placeholder="Cari data..." onkeyup="filterTable()">
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner">
+      <div class="spinner-border text-primary mb-2" role="status"></div>
+      <span class="text-muted fw-semibold">Memuat data...</span>
+    </div>
+
+    <!-- Main Content Panels -->
+    <div class="card-content d-none" id="contentArea">
+      <div class="tab-content" id="arsipTabsContent">
+        
+        <!-- Panel 1: Surat Menyurat -->
+        <div class="tab-pane fade show active" id="surat-panel">
+          <div class="table-scroll-container">
+            <table class="table custom-table-horizontal align-middle" id="tableSurat"></table>
+          </div>
+        </div>
+
+        <!-- Panel 2: Surat Pengantar -->
+        <div class="tab-pane fade" id="sp-panel">
+          <div class="table-scroll-container">
+            <table class="table custom-table-horizontal align-middle" id="tableSP"></table>
+          </div>
+        </div>
+
+        <!-- Panel 3: Inventaris RT -->
+        <div class="tab-pane fade" id="inv-panel">
+          <div class="table-scroll-container">
+            <table class="table custom-table-horizontal align-middle" id="tableInv"></table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Powered by Anto Design Concept &copy; 2026
+  </footer>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let isInitialLoad = true;
+    let currentTab = 'surat';
+    let globalData = null;
+
+    window.onload = function() {
+      loadData();
+      setInterval(function() {
+        loadData();
+      }, 10000);
+    };
+
+    function loadData() {
+      if (isInitialLoad) {
+        document.getElementById('loadingSpinner').classList.remove('d-none');
+        document.getElementById('contentArea').classList.add('d-none');
+      }
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.add('fa-spin');
+      
+      const API_URL =
+        'https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec';
+
+      function loadData() {
+        if (isInitialLoad) {
+          document.getElementById('loadingSpinner').classList.remove('d-none');
+          document.getElementById('contentArea').classList.add('d-none');
+        }
+
+        const syncIcon = document.getElementById('syncIcon');
+
+        if (syncIcon) {
+          syncIcon.classList.add('fa-spin');
+        }
+
+        fetch(API_URL + '?api=arsip')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('HTTP ' + response.status);
+            }
+
+            return response.json();
+          })
+          .then(data => {
+            renderData(data);
+          })
+          .catch(error => {
+            handleError(error);
+          });
+      }
+
+    function renderData(res) {
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.remove('fa-spin');
+      
+      if (isInitialLoad) {
+        document.getElementById('loadingSpinner').classList.add('d-none');
+        document.getElementById('contentArea').classList.remove('d-none');
+        isInitialLoad = false;
+      }
+
+      if (!res.success) {
+        console.error('Gagal memperbarui data: ' + res.error);
+        return;
+      }
+
+      globalData = res;
+      filterTable();
+    }
+
+    function handleError(err) {
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.remove('fa-spin');
+      console.error("Terjadi kesalahan sinkronisasi: " + err);
+    }
+
+    /* RENDER TABEL SURAT MENYURAT HORIZONTAL */
+    function renderSuratHorizontal(list) {
+      const table = document.getElementById('tableSurat');
+      if (!list || list.length === 0) {
+        table.innerHTML = '<tbody><tr><td class="text-center text-muted p-4">Tidak ada data surat.</td></tr></tbody>';
+        return;
+      }
+      let rowNo = '<tr><th class="sticky-col">No. Surat</th>';
+      let rowTgl = '<tr><th class="sticky-col">Tanggal</th>';
+      let rowJenis = '<tr><th class="sticky-col">Jenis Surat</th>';
+      let rowPerihal = '<tr><th class="sticky-col">Perihal</th>';
+      let rowArsip = '<tr><th class="sticky-col">Arsip</th>';
+
+      list.forEach(item => {
+        let btnLink = item.linkArsip
+          ? `<a href="${item.linkArsip}" target="_blank" class="btn-link-arsip"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Link</a>`
+          : '<span class="text-muted small">-</span>';
+
+        rowNo += `<td class="fw-semibold text-primary">${item.noSurat || '-'}</td>`;
+        rowTgl += `<td class="text-nowrap">${item.tanggal || '-'}</td>`;
+        rowJenis += `<td><span class="badge-jenis">${item.jenisSurat || 'Lainnya'}</span></td>`;
+        rowPerihal += `<td class="text-wrap" style="max-width:250px;">${item.perihal || '-'}</td>`;
+        rowArsip += `<td class="text-center">${btnLink}</td>`;
+      });
+
+      rowNo += '</tr>';
+      rowTgl += '</tr>';
+      rowJenis += '</tr>';
+      rowPerihal += '</tr>';
+      rowArsip += '</tr>';
+      table.innerHTML = `<tbody>${rowNo}${rowTgl}${rowJenis}${rowPerihal}${rowArsip}</tbody>`;
+    }
+
+    /* RENDER TABEL SURAT PENGANTAR HORIZONTAL */
+    function renderSPHorizontal(list) {
+      const table = document.getElementById('tableSP');
+      if (!list || list.length === 0) {
+        table.innerHTML = '<tbody><tr><td class="text-center text-muted p-4">Tidak ada data surat pengantar.</td></tr></tbody>';
+        return;
+      }
+      let rowNo = '<tr><th class="sticky-col">No. Surat</th>';
+      let rowTgl = '<tr><th class="sticky-col">Tanggal</th>';
+      let rowPerihal = '<tr><th class="sticky-col">Perihal</th>';
+
+      list.forEach(item => {
+        rowNo += `<td class="fw-semibold text-primary">${item.noSurat || '-'}</td>`;
+        rowTgl += `<td class="text-nowrap">${item.tanggal || '-'}</td>`;
+        rowPerihal += `<td class="text-wrap" style="max-width:250px;">${item.perihal || '-'}</td>`;
+      });
+
+      rowNo += '</tr>';
+      rowTgl += '</tr>';
+      rowPerihal += '</tr>';
+      table.innerHTML = `<tbody>${rowNo}${rowTgl}${rowPerihal}</tbody>`;
+    }
+
+    /* RENDER TABEL INVENTARIS HORIZONTAL */
+    function renderInvHorizontal(invObj) {
+      const table = document.getElementById('tableInv');
+      const items = invObj.items || [];
+      const headers = invObj.headers || { colD: 'Kondisi D', colE: 'Kondisi E', colF: 'Kondisi F', colG: 'Kondisi G' };
+
+      if (items.length === 0) {
+        table.innerHTML = '<tbody><tr><td class="text-center text-muted p-4">Tidak ada data inventaris.</td></tr></tbody>';
+        return;
+      }
+      let rowNama = '<tr><th class="sticky-col">Nama Barang</th>';
+      let rowD = `<tr><th class="sticky-col">${headers.colD}</th>`;
+      let rowE = `<tr><th class="sticky-col">${headers.colE}</th>`;
+      let rowF = `<tr><th class="sticky-col">${headers.colF}</th>`;
+      let rowG = `<tr><th class="sticky-col">${headers.colG}</th>`;
+
+      items.forEach(item => {
+        rowNama += `<td class="fw-bold text-dark">${item.namaBarang || '-'}</td>`;
+        rowD += `<td>${item.valD}</td>`;
+        rowE += `<td>${item.valE}</td>`;
+        rowF += `<td>${item.valF}</td>`;
+        rowG += `<td class="fw-bold text-primary">${item.valG}</td>`;
+      });
+
+      rowNama += '</tr>';
+      rowD += '</tr>';
+      rowE += '</tr>';
+      rowF += '</tr>';
+      rowG += '</tr>';
+      table.innerHTML = `<tbody>${rowNama}${rowD}${rowE}${rowF}${rowG}</tbody>`;
+    }
+
+    function switchTab(tabName) {
+      currentTab = tabName;
+      document.querySelectorAll('.stat-card').forEach(card => card.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+      
+      // Kosongkan kata kunci pencarian saat berpindah tab
+      document.getElementById('searchInput').value = '';
+
+      if (tabName === 'surat') {
+        document.getElementById('cardSurat').classList.add('active');
+        document.getElementById('surat-panel').classList.add('show', 'active');
+      } else if (tabName === 'sp') {
+        document.getElementById('cardSP').classList.add('active');
+        document.getElementById('sp-panel').classList.add('show', 'active');
+      } else if (tabName === 'inv') {
+        document.getElementById('cardInv').classList.add('active');
+        document.getElementById('inv-panel').classList.add('show', 'active');
+      }
+
+      filterTable();
+    }
+
+    /* FUNSI FILTER DENGAN JUMLAH KARTU AKTIF DINAMIS */
+    function filterTable() {
+      if (!globalData) return;
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      // Total data keseluruhan (Fixed Total)
+      const totalSurat = globalData.surat ? globalData.surat.length : 0;
+      const totalSP = globalData.sp ? globalData.sp.length : 0;
+      const totalInv = (globalData.inventaris && globalData.inventaris.items) ? globalData.inventaris.items.length : 0;
+
+      if (currentTab === 'surat') {
+        const filteredSurat = globalData.surat.filter(item =>
+          (item.noSurat && item.noSurat.toLowerCase().includes(query)) ||
+          (item.perihal && item.perihal.toLowerCase().includes(query)) ||
+          (item.jenisSurat && item.jenisSurat.toLowerCase().includes(query)) ||
+          (item.tanggal && item.tanggal.toLowerCase().includes(query))
+        );
+
+        // Hanya Kartu Surat Menyurat yang Dinamis mengikuti pencarian
+        document.getElementById('countSurat').innerText = filteredSurat.length;
+        document.getElementById('countSP').innerText = totalSP;
+        document.getElementById('countInv').innerText = totalInv;
+
+        renderSuratHorizontal(filteredSurat);
+
+      } else if (currentTab === 'sp') {
+        const filteredSP = globalData.sp.filter(item =>
+          (item.noSurat && item.noSurat.toLowerCase().includes(query)) ||
+          (item.perihal && item.perihal.toLowerCase().includes(query)) ||
+          (item.tanggal && item.tanggal.toLowerCase().includes(query))
+        );
+
+        // Hanya Kartu Surat Pengantar yang Dinamis mengikuti pencarian
+        document.getElementById('countSurat').innerText = totalSurat;
+        document.getElementById('countSP').innerText = filteredSP.length;
+        document.getElementById('countInv').innerText = totalInv;
+
+        renderSPHorizontal(filteredSP);
+
+      } else if (currentTab === 'inv') {
+        const filteredInv = globalData.inventaris.items.filter(item =>
+          (item.namaBarang && item.namaBarang.toLowerCase().includes(query)) ||
+          item.valD.toString().includes(query) ||
+          item.valE.toString().includes(query) ||
+          item.valF.toString().includes(query) ||
+          item.valG.toString().includes(query)
+        );
+
+        // Hanya Kartu Inventaris yang Dinamis mengikuti pencarian
+        document.getElementById('countSurat').innerText = totalSurat;
+        document.getElementById('countSP').innerText = totalSP;
+        document.getElementById('countInv').innerText = filteredInv.length;
+
+        renderInvHorizontal({
+          headers: globalData.inventaris.headers,
+          items: filteredInv
+        });
+      }
+    }
+  </script>
+</body>
+</html>

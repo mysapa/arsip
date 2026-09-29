@@ -387,36 +387,61 @@
       const syncIcon = document.getElementById('syncIcon');
       if (syncIcon) syncIcon.classList.add('fa-spin');
       
-      const API_URL =
-        'https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec';
+    // MASUKKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI SINI
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec";
 
-      function loadData() {
-        if (isInitialLoad) {
-          document.getElementById('loadingSpinner').classList.remove('d-none');
-          document.getElementById('contentArea').classList.add('d-none');
-        }
+    let isInitialLoad = true;
+    let currentTab = 'surat';
+    let globalData = null;
 
-        const syncIcon = document.getElementById('syncIcon');
+    window.onload = function() {
+      loadData();
+      setInterval(function() {
+        loadData();
+      }, 10000);
+    };
 
-        if (syncIcon) {
-          syncIcon.classList.add('fa-spin');
-        }
-
-        fetch(API_URL + '?api=arsip')
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('HTTP ' + response.status);
-            }
-
-            return response.json();
-          })
-          .then(data => {
-            renderData(data);
-          })
-          .catch(error => {
-            handleError(error);
-          });
+    // Ganti fungsi loadData() dengan Fetch API
+    function loadData() {
+      if (isInitialLoad) {
+        document.getElementById('loadingSpinner').classList.remove('d-none');
+        document.getElementById('contentArea').classList.add('d-none');
       }
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.add('fa-spin');
+
+      fetch(WEB_APP_URL)
+        .then(response => response.json())
+        .then(data => {
+          renderData(data);
+        })
+        .catch(err => {
+          handleError(err);
+        });
+    }
+
+    function renderData(res) {
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.remove('fa-spin');
+      
+      if (isInitialLoad) {
+        document.getElementById('loadingSpinner').classList.add('d-none');
+        document.getElementById('contentArea').classList.remove('d-none');
+        isInitialLoad = false;
+      }
+      if (!res.success) {
+        console.error('Gagal memperbarui data: ' + res.error);
+        return;
+      }
+      globalData = res;
+      filterTable();
+    }
+
+    function handleError(err) {
+      const syncIcon = document.getElementById('syncIcon');
+      if (syncIcon) syncIcon.classList.remove('fa-spin');
+      console.error("Terjadi kesalahan sinkronisasi: " + err);
+    }
 
     function renderData(res) {
       const syncIcon = document.getElementById('syncIcon');

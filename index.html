@@ -372,18 +372,6 @@
     let currentTab = 'surat';
     let globalData = null;
 
-    window.onload = function() {
-      loadData();
-      setInterval(function() {
-        loadData();
-      }, 10000);
-    };
-
-    function loadData() {
-      if (isInitialLoad) {
-        document.getElementById('loadingSpinner').classList.remove('d-none');
-        document.getElementById('contentArea').classList.add('d-none');
-      }
       const syncIcon = document.getElementById('syncIcon');
       if (syncIcon) syncIcon.classList.add('fa-spin');
       
@@ -394,11 +382,12 @@
     let currentTab = 'surat';
     let globalData = null;
 
+    // MENJADI THIS:
     window.onload = function() {
       loadData();
       setInterval(function() {
         loadData();
-      }, 10000);
+      }, 30000); // 30 detik (atau 60000 untuk 1 menit)
     };
 
     // Ganti fungsi loadData() dengan Fetch API

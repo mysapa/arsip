@@ -11,7 +11,7 @@
 <style>
 *{box-sizing:border-box}
 html,body{width:100%;max-width:100%;margin:0;padding:0;overflow-x:hidden}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;flex-direction:column}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;flex-direction:column;min-height:100vh}
 
 .header-banner{width:100%;background:linear-gradient(135deg,#003366 0%,#00529c 50%,#0072ce 100%);color:#fff;padding:30px 16px 75px;border-radius:0 0 32px 32px;box-shadow:0 10px 25px rgba(0,51,102,.25);overflow:hidden}
 .header-container{width:100%;max-width:1200px;margin:auto}
@@ -49,7 +49,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;flex-directio
 .search-box i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;z-index:2}
 
 #loadingSpinner{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 0;width:100%}
-footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight:400;color:#808080;margin-top:0px}
+footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight:400;color:#808080;margin-top:0}
 
 @media(max-width:576px){
 .header-banner{padding:25px 12px 68px;border-radius:0 0 26px 26px}
@@ -214,6 +214,71 @@ function handleError(err){
 
 
 /* =========================
+   HELPER
+   ========================= */
+
+const BULAN_SINGKAT=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const BULAN_INDEX={jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,agt:7,aug:7,sep:8,okt:9,oct:9,nov:10,nop:10,des:11,dec:11};
+
+/* Ubah berbagai format tanggal menjadi "dd mmm yyyy" (contoh: 15 Jan 2026) */
+function formatTanggal(val){
+  if(val===null||val===undefined||val==='')return '-';
+
+  const fmt=(d,m,y)=>`${String(d).padStart(2,'0')} ${BULAN_SINGKAT[m]} ${y}`;
+  const fromDate=dt=>fmt(dt.getDate(),dt.getMonth(),dt.getFullYear());
+  let m;
+
+  if(val instanceof Date)return isNaN(val)?'-':fromDate(val);
+  if(typeof val==='number')return fromDate(new Date(val));
+
+  const s=String(val).trim();
+
+  // 2026-01-15
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)))return fmt(+m[3],+m[2]-1,m[1]);
+
+  // 15/01/2026, 15-01-2026, 15.01.2026
+  if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/)))return fmt(+m[1],+m[2]-1,m[3]);
+
+  // 2026-01-14T16:00:00.000Z (ISO dengan jam, dikonversi ke zona waktu perangkat)
+  if(/^\d{4}-\d{2}-\d{2}T/.test(s)){
+    const dt=new Date(s);
+    if(!isNaN(dt))return fromDate(dt);
+  }
+
+  // Thu Jan 15 2026 00:00:00 GMT+0800 (...)  -> diambil langsung, tanpa konversi zona waktu
+  if((m=s.match(/^[A-Za-z]{3},?\s+([A-Za-z]{3})[A-Za-z]*\s+(\d{1,2})\s+(\d{4})/))){
+    const idx=BULAN_INDEX[m[1].toLowerCase()];
+    if(idx!==undefined)return fmt(+m[2],idx,m[3]);
+  }
+
+  // 15 Januari 2026 / 15 Jan 2026
+  if((m=s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/))){
+    const idx=BULAN_INDEX[m[2].slice(0,3).toLowerCase()];
+    if(idx!==undefined)return fmt(+m[1],idx,m[3]);
+  }
+
+  const dt=new Date(s);
+  return isNaN(dt)?s:fromDate(dt);
+}
+
+/* Cegah karakter HTML dari data spreadsheet merusak tampilan */
+function escapeHtml(text){
+  return String(text??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+/* Hanya izinkan link http/https */
+function safeUrl(url){
+  const u=String(url??'').trim();
+  return /^https?:\/\//i.test(u)?escapeHtml(u):'';
+}
+
+
+/* =========================
    RENDER SURAT
    ========================= */
 
@@ -232,14 +297,15 @@ function renderSuratHorizontal(list){
       rowArsip='<tr><th class="sticky-col">Arsip</th>';
 
   list.forEach(item=>{
-    const btnLink=item.linkArsip
-      ? `<a href="${item.linkArsip}" target="_blank" class="btn-link-arsip"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Link</a>`
+    const link=safeUrl(item.linkArsip);
+    const btnLink=link
+      ? `<a href="${link}" target="_blank" rel="noopener noreferrer" class="btn-link-arsip"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Link</a>`
       : '<span class="text-muted small">-</span>';
 
-    rowNo+=`<td class="fw-semibold text-primary">${item.noSurat||'-'}</td>`;
-    rowTgl+=`<td class="text-nowrap">${item.tanggal||'-'}</td>`;
-    rowJenis+=`<td><span class="badge-jenis">${item.jenisSurat||'Lainnya'}</span></td>`;
-    rowPerihal+=`<td class="text-wrap" style="max-width:250px">${item.perihal||'-'}</td>`;
+    rowNo+=`<td class="fw-semibold text-primary">${escapeHtml(item.noSurat||'-')}</td>`;
+    rowTgl+=`<td class="text-nowrap">${formatTanggal(item.tanggal)}</td>`;
+    rowJenis+=`<td><span class="badge-jenis">${escapeHtml(item.jenisSurat||'Lainnya')}</span></td>`;
+    rowPerihal+=`<td class="text-wrap" style="max-width:250px">${escapeHtml(item.perihal||'-')}</td>`;
     rowArsip+=`<td class="text-center">${btnLink}</td>`;
   });
 
@@ -264,9 +330,9 @@ function renderSPHorizontal(list){
       rowPerihal='<tr><th class="sticky-col">Perihal</th>';
 
   list.forEach(item=>{
-    rowNo+=`<td class="fw-semibold text-primary">${item.noSurat||'-'}</td>`;
-    rowTgl+=`<td class="text-nowrap">${item.tanggal||'-'}</td>`;
-    rowPerihal+=`<td class="text-wrap" style="max-width:250px">${item.perihal||'-'}</td>`;
+    rowNo+=`<td class="fw-semibold text-primary">${escapeHtml(item.noSurat||'-')}</td>`;
+    rowTgl+=`<td class="text-nowrap">${escapeHtml(item.tanggal||'-')}</td>`;
+    rowPerihal+=`<td class="text-wrap" style="max-width:250px">${escapeHtml(item.perihal||'-')}</td>`;
   });
 
   table.innerHTML=`<tbody>${rowNo}</tr>${rowTgl}</tr>${rowPerihal}</tr></tbody>`;
@@ -288,17 +354,17 @@ function renderInvHorizontal(invObj){
   }
 
   let rowNama='<tr><th class="sticky-col">Nama Barang</th>',
-      rowD=`<tr><th class="sticky-col">${headers.colD}</th>`,
-      rowE=`<tr><th class="sticky-col">${headers.colE}</th>`,
-      rowF=`<tr><th class="sticky-col">${headers.colF}</th>`,
-      rowG=`<tr><th class="sticky-col">${headers.colG}</th>`;
+      rowD=`<tr><th class="sticky-col">${escapeHtml(headers.colD)}</th>`,
+      rowE=`<tr><th class="sticky-col">${escapeHtml(headers.colE)}</th>`,
+      rowF=`<tr><th class="sticky-col">${escapeHtml(headers.colF)}</th>`,
+      rowG=`<tr><th class="sticky-col">${escapeHtml(headers.colG)}</th>`;
 
   items.forEach(item=>{
-    rowNama+=`<td class="fw-bold text-dark">${item.namaBarang||'-'}</td>`;
-    rowD+=`<td>${item.valD}</td>`;
-    rowE+=`<td>${item.valE}</td>`;
-    rowF+=`<td>${item.valF}</td>`;
-    rowG+=`<td class="fw-bold text-primary">${item.valG}</td>`;
+    rowNama+=`<td class="fw-bold text-dark">${escapeHtml(item.namaBarang||'-')}</td>`;
+    rowD+=`<td>${escapeHtml(item.valD)}</td>`;
+    rowE+=`<td>${escapeHtml(item.valE)}</td>`;
+    rowF+=`<td>${escapeHtml(item.valF)}</td>`;
+    rowG+=`<td class="fw-bold text-primary">${escapeHtml(item.valG)}</td>`;
   });
 
   table.innerHTML=`<tbody>${rowNama}</tr>${rowD}</tr>${rowE}</tr>${rowF}</tr>${rowG}</tr></tbody>`;
@@ -350,11 +416,11 @@ function filterTable(){
 
   if(currentTab==='surat'){
 
-    const filteredSurat=globalData.surat.filter(item=>
+    const filteredSurat=(globalData.surat||[]).filter(item=>
       (item.noSurat&&item.noSurat.toLowerCase().includes(query))||
       (item.perihal&&item.perihal.toLowerCase().includes(query))||
       (item.jenisSurat&&item.jenisSurat.toLowerCase().includes(query))||
-      (item.tanggal&&item.tanggal.toLowerCase().includes(query))
+      formatTanggal(item.tanggal).toLowerCase().includes(query)
     );
 
     document.getElementById('countSurat').innerText=filteredSurat.length;
@@ -365,10 +431,10 @@ function filterTable(){
 
   }else if(currentTab==='sp'){
 
-    const filteredSP=globalData.sp.filter(item=>
+    const filteredSP=(globalData.sp||[]).filter(item=>
       (item.noSurat&&item.noSurat.toLowerCase().includes(query))||
       (item.perihal&&item.perihal.toLowerCase().includes(query))||
-      (item.tanggal&&item.tanggal.toLowerCase().includes(query))
+      (item.tanggal&&String(item.tanggal).toLowerCase().includes(query))
     );
 
     document.getElementById('countSurat').innerText=totalSurat;
@@ -379,12 +445,13 @@ function filterTable(){
 
   }else if(currentTab==='inv'){
 
-    const filteredInv=globalData.inventaris.items.filter(item=>
+    const invItems=(globalData.inventaris&&globalData.inventaris.items)||[];
+    const filteredInv=invItems.filter(item=>
       (item.namaBarang&&item.namaBarang.toLowerCase().includes(query))||
-      item.valD.toString().includes(query)||
-      item.valE.toString().includes(query)||
-      item.valF.toString().includes(query)||
-      item.valG.toString().includes(query)
+      String(item.valD??'').toLowerCase().includes(query)||
+      String(item.valE??'').toLowerCase().includes(query)||
+      String(item.valF??'').toLowerCase().includes(query)||
+      String(item.valG??'').toLowerCase().includes(query)
     );
 
     document.getElementById('countSurat').innerText=totalSurat;
@@ -392,7 +459,7 @@ function filterTable(){
     document.getElementById('countInv').innerText=filteredInv.length;
 
     renderInvHorizontal({
-      headers:globalData.inventaris.headers,
+      headers:globalData.inventaris?globalData.inventaris.headers:undefined,
       items:filteredInv
     });
   }

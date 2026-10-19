@@ -87,16 +87,18 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
 <body>
 
-<div class="header-banner">
-  <div class="header-container">
-    <div class="brand-box">
-      <div class="header-title-group">
-        <span class="app-subtitle">Pencatatan Dokumen</span>
-        <h3 class="app-title">Surat dan Inventaris</h3>
-      </div>
-      <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Live Sync 10s</span></div>
-    </div>
-  </div>
+<div class="header-banner"> 
+  <div class="header-container"> 
+    <div class="brand-box"> 
+      <div class="header-title-group"> 
+        <span class="app-subtitle">Pencatatan Dokumen</span> 
+        <h3 class="app-title">
+          <i class="fa-solid fa-box-archive"></i> Surat dan Inventaris <!-- Ikon ditambahkan di sini -->
+        </h3> 
+      </div> 
+      <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Live Sync 10s</span></div> 
+    </div> 
+  </div> 
 </div>
 
 <div class="main-container">
@@ -105,7 +107,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
     <div class="col-4">
       <div class="stat-card active" id="cardSurat" onclick="switchTab('surat')">
         <div class="stat-icon bg-primary-subtle text-primary"><i class="fa-solid fa-envelope"></i></div>
-        <div><p class="stat-title">Surat Menyurat</p><h3 class="stat-value" id="countSurat">0</h3></div>
+        <div><p class="stat-title">Korespondensi</p><h3 class="stat-value" id="countSurat">0</h3></div>
       </div>
     </div>
 

@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <title>Dashboard Arsip MySAPA</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://script.google.com">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -93,7 +98,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
       <div class="header-title-group"> 
         <span class="app-subtitle">Pencatatan Dokumen</span> 
         <h3 class="app-title">
-          <i class="fa-solid fa-box-archive"></i> Surat dan Inventaris <!-- Ikon ditambahkan di sini -->
+          <i class="fa-solid fa-box-archive"></i> Surat dan Inventaris
         </h3> 
       </div> 
       <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Live Sync 10s</span></div> 
@@ -133,7 +138,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
   <div id="loadingSpinner">
     <div class="spinner-border text-primary mb-2" role="status"></div>
-    <span class="text-muted fw-semibold">Memuat data...</span>
+    <span class="text-muted fw-semibold" id="loadingText">Memuat data...</span>
   </div>
 
   <div class="card-content d-none" id="contentArea">
@@ -163,41 +168,81 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
 <footer>Powered by Anto Design Concept &copy; 2026</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec';
-let isInitialLoad=true,currentTab='surat',globalData=null;
+const CACHE_KEY='arsipMySAPA_cache';
+const POLL_MS=10000;
+let currentTab='surat',globalData=null,lastRaw='',isFetching=false,pollTimer=null;
 
 window.onload=()=>{
+  // Tampilkan data tersimpan (jika ada) agar halaman langsung terisi, lalu perbarui di latar belakang
+  const cached=readCache();
+  if(cached){
+    globalData=cached.data;
+    lastRaw=cached.raw;
+    showContent();
+    filterTable();
+  }
   loadData();
-  setInterval(loadData,10000);
 };
 
-function loadData(){
-  if(isInitialLoad){
-    document.getElementById('loadingSpinner').classList.remove('d-none');
-    document.getElementById('contentArea').classList.add('d-none');
+// Saat tab kembali aktif, langsung sinkron ulang
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)loadData();
+});
+
+function readCache(){
+  try{
+    const raw=localStorage.getItem(CACHE_KEY);
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    return data&&data.success?{data,raw}:null;
+  }catch(e){
+    return null;
   }
-
-  const syncIcon=document.getElementById('syncIcon');
-  if(syncIcon)syncIcon.classList.add('fa-spin');
-
-  fetch(WEB_APP_URL)
-    .then(response=>response.json())
-    .then(res=>renderData(res))
-    .catch(err=>handleError(err));
 }
 
-function renderData(res){
-  const syncIcon=document.getElementById('syncIcon');
-  if(syncIcon)syncIcon.classList.remove('fa-spin');
+function saveCache(raw){
+  try{localStorage.setItem(CACHE_KEY,raw);}catch(e){}
+}
 
-  if(isInitialLoad){
-    document.getElementById('loadingSpinner').classList.add('d-none');
-    document.getElementById('contentArea').classList.remove('d-none');
-    isInitialLoad=false;
+function showContent(){
+  document.getElementById('loadingSpinner').classList.add('d-none');
+  document.getElementById('contentArea').classList.remove('d-none');
+}
+
+function setSpin(on){
+  const syncIcon=document.getElementById('syncIcon');
+  if(syncIcon)syncIcon.classList.toggle('fa-spin',on);
+}
+
+/* Permintaan berikutnya dijadwalkan SETELAH permintaan sebelumnya selesai,
+   sehingga request tidak menumpuk ketika server lambat. */
+function loadData(){
+  clearTimeout(pollTimer);
+  if(isFetching)return;
+  isFetching=true;
+  setSpin(true);
+
+  fetch(WEB_APP_URL)
+    .then(response=>response.text())
+    .then(renderData)
+    .catch(handleError)
+    .finally(()=>{
+      isFetching=false;
+      setSpin(false);
+      pollTimer=setTimeout(()=>{if(!document.hidden)loadData();},POLL_MS);
+    });
+}
+
+function renderData(raw){
+  // Data tidak berubah: tidak perlu parse dan render ulang
+  if(raw===lastRaw&&globalData){
+    showContent();
+    return;
   }
+
+  const res=JSON.parse(raw);
 
   if(!res.success){
     console.error('Gagal memperbarui data: '+res.error);
@@ -205,13 +250,17 @@ function renderData(res){
   }
 
   globalData=res;
+  lastRaw=raw;
+  saveCache(raw);
+  showContent();
   filterTable();
 }
 
 function handleError(err){
-  const syncIcon=document.getElementById('syncIcon');
-  if(syncIcon)syncIcon.classList.remove('fa-spin');
   console.error('Terjadi kesalahan sinkronisasi: '+err);
+  if(!globalData){
+    document.getElementById('loadingText').innerText='Gagal memuat data, mencoba lagi...';
+  }
 }
 
 

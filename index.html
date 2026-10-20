@@ -48,9 +48,15 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 /* Semua teks tabel berwarna hitam */
 .custom-table-horizontal,.custom-table-horizontal th,.custom-table-horizontal td,
 .custom-table-horizontal .text-primary,.custom-table-horizontal .text-dark,
-.custom-table-horizontal .text-muted,.custom-table-horizontal .badge-jenis,
-.custom-table-horizontal .btn-link-arsip{color:#000!important}
+.custom-table-horizontal .text-muted,.custom-table-horizontal .badge-jenis{color:#000!important}
 .custom-table-horizontal tr.row-jumlah th.sticky-col,.custom-table-horizontal tr.row-jumlah td{font-weight:800}
+
+/* Tabel vertikal (Surat Pengantar): judul kolom di atas, data per baris */
+.custom-table-vertical{margin-bottom:0;width:100%;border-collapse:separate;border-spacing:0}
+.custom-table-vertical th{background:#f8fafc!important;color:#000!important;font-weight:700;font-size:.85rem;padding:10px 14px;text-align:left;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1}
+.custom-table-vertical td{background:#fff;color:#000!important;font-size:.9rem;padding:10px 14px;text-align:left;vertical-align:middle;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+.custom-table-vertical th:last-child,.custom-table-vertical td:last-child{border-right:none}
+.custom-table-vertical tr:last-child td{border-bottom:none}
 
 .badge-jenis{background:#e0f2fe;color:#0369a1;font-weight:600;padding:6px 12px;border-radius:8px;font-size:.78rem;display:inline-block}
 .btn-link-arsip{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:5px 12px;font-weight:600;font-size:.82rem;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
@@ -80,6 +86,8 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 .search-box input{height:42px;font-size:13px}
 .custom-table-horizontal th.sticky-col{font-size:.75rem;padding:8px 9px}
 .custom-table-horizontal td{font-size:.78rem;min-width:145px;padding:8px 10px}
+.custom-table-vertical th{font-size:.75rem;padding:8px 9px}
+.custom-table-vertical td{font-size:.78rem;padding:8px 9px}
 .badge-jenis{font-size:.7rem;padding:5px 8px}
 .btn-link-arsip{font-size:.72rem;padding:4px 8px;gap:4px}
 }
@@ -159,7 +167,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
       <div class="tab-pane fade" id="sp-panel">
         <div class="table-scroll-container">
-          <table class="table custom-table-horizontal align-middle" id="tableSP"></table>
+          <table class="table custom-table-vertical align-middle" id="tableSP"></table>
         </div>
       </div>
 
@@ -375,25 +383,21 @@ function renderSuratHorizontal(list){
    RENDER SURAT PENGANTAR
    ========================= */
 
-function renderSPHorizontal(list){
+function renderSPVertical(list){
   const table=document.getElementById('tableSP');
 
   if(!list||!list.length){
-    table.innerHTML='<tbody><tr><td class="text-center text-muted p-4">Tidak ada data surat pengantar.</td></tr></tbody>';
+    table.innerHTML='<tbody><tr><td class="text-center p-4">Tidak ada data surat pengantar.</td></tr></tbody>';
     return;
   }
 
-  let rowNo='<tr><th class="sticky-col">No. Surat</th>',
-      rowTgl='<tr><th class="sticky-col">Tanggal</th>',
-      rowPerihal='<tr><th class="sticky-col">Perihal</th>';
+  const rows=list.map(item=>`<tr>
+      <td class="fw-semibold">${escapeHtml(item.noSurat||'-')}</td>
+      <td class="text-nowrap">${escapeHtml(formatTanggal(item.tanggal))}</td>
+      <td>${escapeHtml(item.perihal||'-')}</td>
+    </tr>`).join('');
 
-  list.forEach(item=>{
-    rowNo+=`<td class="fw-semibold text-primary">${escapeHtml(item.noSurat||'-')}</td>`;
-    rowTgl+=`<td class="text-nowrap">${escapeHtml(item.tanggal||'-')}</td>`;
-    rowPerihal+=`<td class="text-wrap" style="max-width:250px">${escapeHtml(item.perihal||'-')}</td>`;
-  });
-
-  table.innerHTML=`<tbody>${rowNo}</tr>${rowTgl}</tr>${rowPerihal}</tr></tbody>`;
+  table.innerHTML=`<thead><tr><th>No. Surat</th><th>Tanggal</th><th>Perihal</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
 
@@ -497,14 +501,14 @@ function filterTable(){
     const filteredSP=(globalData.sp||[]).filter(item=>
       (item.noSurat&&item.noSurat.toLowerCase().includes(query))||
       (item.perihal&&item.perihal.toLowerCase().includes(query))||
-      (item.tanggal&&String(item.tanggal).toLowerCase().includes(query))
+      formatTanggal(item.tanggal).toLowerCase().includes(query)
     );
 
     document.getElementById('countSurat').innerText=totalSurat;
     document.getElementById('countSP').innerText=filteredSP.length;
     document.getElementById('countInv').innerText=totalInv;
 
-    renderSPHorizontal(filteredSP);
+    renderSPVertical(filteredSP);
 
   }else if(currentTab==='inv'){
 

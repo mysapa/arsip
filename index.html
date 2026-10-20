@@ -39,7 +39,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 .stat-value{font-size:24px;font-weight:800;color:#0f172a;margin:4px 0 0}
 
 .card-content{width:100%;background:transparent;padding:0}
-.table-scroll-container{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-radius:16px;border:1px solid #cbd5e1;background:#fff;box-shadow:0 4px 15px rgba(0,0,0,.03)}
+.table-scroll-container{width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-radius:0;border:1px solid #cbd5e1;background:#fff;box-shadow:0 4px 15px rgba(0,0,0,.03)}
 .custom-table-horizontal{margin-bottom:0;width:max-content;min-width:100%;border-collapse:separate;border-spacing:0}
 .custom-table-horizontal th.sticky-col{position:sticky;left:0;z-index:10;background:#f8fafc!important;color:#334155;font-weight:700;font-size:.85rem;border-right:2px solid #cbd5e1;border-bottom:1px solid #e2e8f0;padding:10px 14px;width:1%;white-space:nowrap;box-shadow:3px 0 6px rgba(0,0,0,.04);text-align:left}
 .custom-table-horizontal td{padding:10px 16px;font-size:.9rem;color:#334155;text-align:left;min-width:180px;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;vertical-align:middle;background:#fff}
@@ -50,15 +50,20 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 .custom-table-horizontal .text-primary,.custom-table-horizontal .text-dark,
 .custom-table-horizontal .text-muted,.custom-table-horizontal .badge-jenis{color:#000!important}
 .custom-table-horizontal tr.row-jumlah th.sticky-col,.custom-table-horizontal tr.row-jumlah td{font-weight:800}
+.custom-table-horizontal tr.row-jumlah td{background:#f8fafc}
 
 /* Tabel vertikal (Surat Pengantar): judul kolom di atas, data per baris */
 .custom-table-vertical{margin-bottom:0;width:100%;border-collapse:separate;border-spacing:0}
+.sp-scroll{overflow-y:auto}
+.custom-table-vertical thead th{position:sticky;top:0;z-index:5}
 .custom-table-vertical th{background:#f8fafc!important;color:#000!important;font-weight:700;font-size:.85rem;padding:10px 14px;text-align:left;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1}
 .custom-table-vertical td{background:#fff;color:#000!important;font-size:.9rem;padding:10px 14px;text-align:left;vertical-align:middle;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
 .custom-table-vertical th:last-child,.custom-table-vertical td:last-child{border-right:none}
 .custom-table-vertical tr:last-child td{border-bottom:none}
 
 .badge-jenis{background:#e0f2fe;color:#0369a1;font-weight:600;padding:6px 12px;border-radius:8px;font-size:.78rem;display:inline-block}
+.badge-masuk{background:#dcfce7}
+.badge-keluar{background:#ffedd5}
 .btn-link-arsip{background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:10px;padding:5px 12px;font-weight:600;font-size:.82rem;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-link-arsip:hover{background:#2563eb;color:#fff}
 
@@ -166,7 +171,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
       </div>
 
       <div class="tab-pane fade" id="sp-panel">
-        <div class="table-scroll-container">
+        <div class="table-scroll-container sp-scroll" id="spScroll">
           <table class="table custom-table-vertical align-middle" id="tableSP"></table>
         </div>
       </div>
@@ -348,6 +353,14 @@ function safeUrl(url){
    RENDER SURAT
    ========================= */
 
+/* Warna latar jenis surat: masuk = hijau, keluar = oranye, lainnya = biru muda */
+function badgeJenisClass(jenis){
+  const j=String(jenis??'').toLowerCase();
+  if(j.includes('masuk'))return 'badge-masuk';
+  if(j.includes('keluar'))return 'badge-keluar';
+  return '';
+}
+
 function renderSuratHorizontal(list){
   const table=document.getElementById('tableSurat');
 
@@ -370,7 +383,7 @@ function renderSuratHorizontal(list){
 
     rowNo+=`<td class="fw-semibold text-primary">${escapeHtml(item.noSurat||'-')}</td>`;
     rowTgl+=`<td class="text-nowrap">${formatTanggal(item.tanggal)}</td>`;
-    rowJenis+=`<td><span class="badge-jenis">${escapeHtml(item.jenisSurat||'Lainnya')}</span></td>`;
+    rowJenis+=`<td><span class="badge-jenis ${badgeJenisClass(item.jenisSurat)}">${escapeHtml(item.jenisSurat||'Lainnya')}</span></td>`;
     rowPerihal+=`<td class="text-wrap" style="max-width:250px">${escapeHtml(item.perihal||'-')}</td>`;
     rowArsip+=`<td class="text-center">${btnLink}</td>`;
   });
@@ -398,7 +411,23 @@ function renderSPVertical(list){
     </tr>`).join('');
 
   table.innerHTML=`<thead><tr><th>No. Surat</th><th>Tanggal</th><th>Perihal</th></tr></thead><tbody>${rows}</tbody>`;
+  limitSPHeight();
 }
+
+/* Tampilkan 4 baris data; selebihnya digulir (tinggi dihitung dari tinggi baris sebenarnya) */
+const SP_VISIBLE_ROWS=4;
+function limitSPHeight(){
+  const box=document.getElementById('spScroll'),
+        head=document.querySelector('#tableSP thead'),
+        rows=document.querySelectorAll('#tableSP tbody tr');
+  if(!box||!head)return;
+  box.style.maxHeight='';
+  if(rows.length<=SP_VISIBLE_ROWS)return;
+  let h=head.offsetHeight+2;
+  for(let i=0;i<SP_VISIBLE_ROWS;i++)h+=rows[i].offsetHeight;
+  box.style.maxHeight=h+'px';
+}
+window.addEventListener('resize',()=>{if(currentTab==='sp')limitSPHeight();});
 
 
 /* =========================

@@ -54,7 +54,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 
 /* Tabel vertikal (Surat Pengantar): judul kolom di atas, data per baris */
 .custom-table-vertical{margin-bottom:0;width:100%;border-collapse:separate;border-spacing:0}
-.sp-scroll{overflow-y:auto}
+.sp-scroll{overflow-y:auto;overflow-x:hidden}
+.custom-table-vertical th:nth-child(1){width:32%}
+.custom-table-vertical td{overflow-wrap:anywhere}
 .custom-table-vertical thead th{position:sticky;top:0;z-index:5}
 .custom-table-vertical th{background:#f8fafc!important;color:#000!important;font-weight:700;font-size:.85rem;padding:10px 14px;text-align:left;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1}
 .custom-table-vertical td{background:#fff;color:#000!important;font-size:.9rem;padding:10px 14px;text-align:left;vertical-align:middle;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
@@ -405,7 +407,7 @@ function renderSPVertical(list){
   }
 
   const rows=list.map(item=>`<tr>
-      <td class="fw-semibold">${escapeHtml(item.noSurat||'-')}</td>
+      <td class="fw-semibold">${escapeHtml(item.noSurat||'-').replace(/\//g,'/<wbr>')}</td>
       <td class="text-nowrap">${escapeHtml(formatTanggal(item.tanggal))}</td>
       <td>${escapeHtml(item.perihal||'-')}</td>
     </tr>`).join('');
@@ -414,8 +416,8 @@ function renderSPVertical(list){
   limitSPHeight();
 }
 
-/* Tampilkan 4 baris data; selebihnya digulir (tinggi dihitung dari tinggi baris sebenarnya) */
-const SP_VISIBLE_ROWS=4;
+/* Tampilkan 5 baris data; selebihnya digulir (tinggi dihitung dari tinggi baris sebenarnya) */
+const SP_VISIBLE_ROWS=5;
 function limitSPHeight(){
   const box=document.getElementById('spScroll'),
         head=document.querySelector('#tableSP thead'),

@@ -52,12 +52,14 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 .custom-table-horizontal tr.row-jumlah th.sticky-col,.custom-table-horizontal tr.row-jumlah td{font-weight:800}
 .custom-table-horizontal tr.row-jumlah td{background:#f8fafc}
 
+/* Tabel Inventaris: semua kolom data berlebar sama, teks panjang turun ke baris berikutnya */
+:root{--inv-col:150px}
+#tableInv td:not(.p-4){width:var(--inv-col);min-width:var(--inv-col);max-width:var(--inv-col);white-space:normal;overflow-wrap:anywhere}
+
 /* Tabel vertikal (Surat Pengantar): judul kolom di atas, data per baris */
 .custom-table-vertical{margin-bottom:0;width:100%;border-collapse:separate;border-spacing:0}
 .sp-scroll{overflow-y:auto;overflow-x:hidden}
-.custom-table-vertical th:nth-child(1){width:45%}
-.custom-table-vertical th:nth-child(2){width:20%}
-.custom-table-vertical th:nth-child(3){width:35%}
+.custom-table-vertical th:nth-child(1){width:32%}
 .custom-table-vertical td{overflow-wrap:anywhere}
 .custom-table-vertical thead th{position:sticky;top:0;z-index:5}
 .custom-table-vertical th{background:#f8fafc!important;color:#000!important;font-weight:700;font-size:.85rem;padding:10px 14px;text-align:left;white-space:nowrap;border-right:1px solid #e2e8f0;border-bottom:2px solid #cbd5e1}
@@ -94,7 +96,8 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 .search-box{margin-bottom:10px!important}
 .search-box input{height:42px;font-size:13px}
 .custom-table-horizontal th.sticky-col{font-size:.75rem;padding:8px 9px}
-.custom-table-horizontal td{font-size:.78rem;min-width:100px;padding:8px 10px}
+.custom-table-horizontal td{font-size:.78rem;min-width:145px;padding:8px 10px}
+:root{--inv-col:125px}
 .custom-table-vertical th{font-size:.75rem;padding:8px 9px}
 .custom-table-vertical td{font-size:.78rem;padding:8px 9px}
 .badge-jenis{font-size:.7rem;padding:5px 8px}

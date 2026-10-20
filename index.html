@@ -94,7 +94,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 .search-box{margin-bottom:10px!important}
 .search-box input{height:42px;font-size:13px}
 .custom-table-horizontal th.sticky-col{font-size:.75rem;padding:8px 9px}
-.custom-table-horizontal td{font-size:.78rem;min-width:125px;padding:8px 10px}
+.custom-table-horizontal td{font-size:.78rem;min-width:100px;padding:8px 10px}
 .custom-table-vertical th{font-size:.75rem;padding:8px 9px}
 .custom-table-vertical td{font-size:.78rem;padding:8px 9px}
 .badge-jenis{font-size:.7rem;padding:5px 8px}
@@ -388,7 +388,7 @@ function renderSuratHorizontal(list){
     rowNo+=`<td class="fw-semibold text-primary">${escapeHtml(item.noSurat||'-')}</td>`;
     rowTgl+=`<td class="text-nowrap">${formatTanggal(item.tanggal)}</td>`;
     rowJenis+=`<td><span class="badge-jenis ${badgeJenisClass(item.jenisSurat)}">${escapeHtml(item.jenisSurat||'Lainnya')}</span></td>`;
-    rowPerihal+=`<td class="text-wrap" style="max-width:200px">${escapeHtml(item.perihal||'-')}</td>`;
+    rowPerihal+=`<td class="text-wrap" style="max-width:180px">${escapeHtml(item.perihal||'-')}</td>`;
     rowArsip+=`<td class="text-center">${btnLink}</td>`;
   });
 

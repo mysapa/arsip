@@ -54,7 +54,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 
 /* Tabel Inventaris: semua kolom data berlebar sama, teks panjang turun ke baris berikutnya */
 :root{--inv-col:150px}
-#tableInv td:not(.p-4){width:var(--inv-col);min-width:var(--inv-col);max-width:var(--inv-col);white-space:normal;overflow-wrap:anywhere}
+#tableInv td:not(.p-4){width:var(--inv-col);min-width:var(--inv-col);max-width:var(--inv-col);white-space:normal;overflow-wrap:anywhere;text-align:center}
 
 /* Tabel vertikal (Surat Pengantar): judul kolom di atas, data per baris */
 .custom-table-vertical{margin-bottom:0;width:100%;border-collapse:separate;border-spacing:0}
@@ -199,7 +199,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec';
-const CACHE_KEY='arsipMySAPA_cache';
+const CACHE_KEY='arsipMySAPA_cache_v2';
 const POLL_MS=10000;
 let currentTab='surat',globalData=null,lastRaw='',isFetching=false,pollTimer=null;
 
@@ -445,34 +445,37 @@ window.addEventListener('resize',()=>{if(currentTab==='sp')limitSPHeight();});
 
 function renderInvHorizontal(invObj){
   const table=document.getElementById('tableInv'),
-        items=invObj.items||[],
-        headers=invObj.headers||{colD:'Kondisi D',colE:'Kondisi E',colF:'Kondisi F',colG:'Kondisi G'};
+        items=invObj.items||[];
 
   if(!items.length){
     table.innerHTML='<tbody><tr><td class="text-center text-muted p-4">Tidak ada data inventaris.</td></tr></tbody>';
     return;
   }
 
-  let rowNama='<tr><th class="sticky-col">Nama Barang</th>',
-      rowD=`<tr><th class="sticky-col">${escapeHtml(headers.colD)}</th>`,
-      rowE=`<tr><th class="sticky-col">${escapeHtml(headers.colE)}</th>`,
-      rowF=`<tr><th class="sticky-col">${escapeHtml(headers.colF)}</th>`,
-      rowG=`<tr><th class="sticky-col">${escapeHtml(headers.colG)}</th>`,
-      rowJumlah='<tr class="row-jumlah"><th class="sticky-col">Jumlah</th>';
+  let rowTgl='<tr><th class="sticky-col">Tgl Terima</th>',
+      rowNama='<tr><th class="sticky-col">Nama Aset</th>',
+      rowBaik='<tr><th class="sticky-col">Kondisi Baik</th>',
+      rowRingan='<tr><th class="sticky-col">Rusak Ringan</th>',
+      rowBerat='<tr><th class="sticky-col">Rusak Berat</th>',
+      rowJumlah='<tr class="row-jumlah"><th class="sticky-col">Jumlah Aset</th>',
+      rowLokasi='<tr><th class="sticky-col">Lokasi Simpan</th>',
+      rowKet='<tr><th class="sticky-col">Keterangan</th>';
 
   const num=v=>{const n=parseFloat(String(v??'').replace(',','.'));return isNaN(n)?0:n;};
 
   items.forEach(item=>{
-    const jumlah=num(item.valD)+num(item.valE)+num(item.valF);
-    rowNama+=`<td class="fw-bold text-dark">${escapeHtml(item.namaBarang||'-')}</td>`;
-    rowD+=`<td>${escapeHtml(item.valD)}</td>`;
-    rowE+=`<td>${escapeHtml(item.valE)}</td>`;
-    rowF+=`<td>${escapeHtml(item.valF)}</td>`;
-    rowG+=`<td class="fw-bold text-primary">${escapeHtml(item.valG)}</td>`;
+    const jumlah=num(item.baik)+num(item.ringan)+num(item.berat);
+    rowTgl+=`<td>${item.tglTerima?escapeHtml(formatTanggal(item.tglTerima)):'-'}</td>`;
+    rowNama+=`<td class="fw-bold">${escapeHtml(item.namaAset||'-')}</td>`;
+    rowBaik+=`<td>${escapeHtml(num(item.baik))}</td>`;
+    rowRingan+=`<td>${escapeHtml(num(item.ringan))}</td>`;
+    rowBerat+=`<td>${escapeHtml(num(item.berat))}</td>`;
     rowJumlah+=`<td>${escapeHtml(jumlah)}</td>`;
+    rowLokasi+=`<td>${escapeHtml(item.lokasi||'-')}</td>`;
+    rowKet+=`<td>${escapeHtml(item.ket||'-')}</td>`;
   });
 
-  table.innerHTML=`<tbody>${rowNama}</tr>${rowD}</tr>${rowE}</tr>${rowF}</tr>${rowG}</tr>${rowJumlah}</tr></tbody>`;
+  table.innerHTML=`<tbody>${rowTgl}</tr>${rowNama}</tr>${rowBaik}</tr>${rowRingan}</tr>${rowBerat}</tr>${rowJumlah}</tr>${rowLokasi}</tr>${rowKet}</tr></tbody>`;
 }
 
 
@@ -552,21 +555,20 @@ function filterTable(){
 
     const invItems=(globalData.inventaris&&globalData.inventaris.items)||[];
     const filteredInv=invItems.filter(item=>
-      (item.namaBarang&&item.namaBarang.toLowerCase().includes(query))||
-      String(item.valD??'').toLowerCase().includes(query)||
-      String(item.valE??'').toLowerCase().includes(query)||
-      String(item.valF??'').toLowerCase().includes(query)||
-      String(item.valG??'').toLowerCase().includes(query)
+      String(item.namaAset??'').toLowerCase().includes(query)||
+      String(item.lokasi??'').toLowerCase().includes(query)||
+      String(item.ket??'').toLowerCase().includes(query)||
+      (item.tglTerima&&formatTanggal(item.tglTerima).toLowerCase().includes(query))||
+      String(item.baik??'').toLowerCase().includes(query)||
+      String(item.ringan??'').toLowerCase().includes(query)||
+      String(item.berat??'').toLowerCase().includes(query)
     );
 
     document.getElementById('countSurat').innerText=totalSurat;
     document.getElementById('countSP').innerText=totalSP;
     document.getElementById('countInv').innerText=filteredInv.length;
 
-    renderInvHorizontal({
-      headers:globalData.inventaris?globalData.inventaris.headers:undefined,
-      items:filteredInv
-    });
+    renderInvHorizontal({items:filteredInv});
   }
 }
 </script>

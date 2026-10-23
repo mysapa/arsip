@@ -448,7 +448,7 @@ function renderInvHorizontal(invObj){
         items=invObj.items||[];
 
   if(!items.length){
-    table.innerHTML='<tbody><tr><td class="text-center text-muted p-4">Tidak ada data inventaris.</td></tr></tbody>';
+    table.innerHTML='<tbody><tr><td class="text-center text-muted p-4">'+escapeHtml(invObj.pesan||'Tidak ada data inventaris.')+'</td></tr></tbody>';
     return;
   }
 
@@ -568,7 +568,7 @@ function filterTable(){
     document.getElementById('countSP').innerText=totalSP;
     document.getElementById('countInv').innerText=filteredInv.length;
 
-    renderInvHorizontal({items:filteredInv});
+    renderInvHorizontal({items:filteredInv,pesan:filteredInv.length||!query?(globalData.inventaris&&globalData.inventaris.pesan):''});
   }
 }
 </script>

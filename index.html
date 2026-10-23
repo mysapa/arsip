@@ -22,9 +22,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f1f5f9;display:flex;
 .header-container{width:100%;max-width:1200px;margin:auto}
 .brand-box{width:100%;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;transform:translateY(-5px)}
 .header-title-group{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1}
-.app-title{font-weight:800;font-size:22px;margin:2px 0 0;line-height:1.2;word-break:break-word}
-.app-subtitle{font-size:18px;opacity:.85;font-weight:500}
-.sync-badge{background:rgba(255,255,255,.18);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.3);color:#fff;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:600;display:flex;align-items:center;gap:5px;transform:translateY(4px);flex-shrink:0;white-space:nowrap}
+.app-title{font-weight:800;font-size:22px;margin:0;line-height:1.2;word-break:break-word}
+.app-subtitle{font-size:16px;opacity:.85;font-weight:500;margin-top:2px}
 
 .main-container{width:100%;max-width:1200px;margin:-50px auto 0;padding:0 20px 20px;flex:1;position:relative;z-index:5;overflow:hidden}
 
@@ -87,7 +86,6 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 .brand-box{gap:5px}
 .app-subtitle{font-size:12px}
 .app-title{font-size:16px}
-.sync-badge{font-size:10px;padding:4px 7px;gap:4px}
 .main-container{margin-top:-40px;padding:0 10px 15px}
 .row{--bs-gutter-x:.5rem;margin-left:0;margin-right:0}
 .row>*{padding-left:.25rem;padding-right:.25rem}
@@ -111,7 +109,6 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 .main-container{padding-left:8px;padding-right:8px}
 .app-title{font-size:16px}
 .app-subtitle{font-size:13px}
-.sync-badge{font-size:10px;padding:3px 6px}
 .stat-card{padding-left:2px;padding-right:2px}
 .stat-title{font-size:12px}
 .stat-value{font-size:20px}
@@ -121,18 +118,15 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 
 <body>
 
-<div class="header-banner"> 
-  <div class="header-container"> 
-    <div class="brand-box"> 
-      <div class="header-title-group"> 
-        <span class="app-subtitle">Pencatatan Dokumen</span> 
-        <h3 class="app-title">
-          <i class="fa-solid fa-box-archive"></i> Surat dan Inventaris
-        </h3> 
-      </div> 
-      <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Sinkron saat dibuka</span></div> 
-    </div> 
-  </div> 
+<div class="header-banner">
+  <div class="header-container">
+    <div class="brand-box">
+      <div class="header-title-group">
+        <h3 class="app-title"><i class="fa-solid fa-folder-open"></i> Pencatatan Dokumen</h3>
+        <span class="app-subtitle">Korespondensi dan Aset</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="main-container">
@@ -240,16 +234,10 @@ function showContent(){
   document.getElementById('contentArea').classList.remove('d-none');
 }
 
-function setSpin(on){
-  const syncIcon=document.getElementById('syncIcon');
-  if(syncIcon)syncIcon.classList.toggle('fa-spin',on);
-}
-
 /* Data diambil sekali saat halaman dibuka (dan saat tab kembali aktif), tanpa polling berkala. */
 function loadData(){
   if(isFetching)return;
   isFetching=true;
-  setSpin(true);
 
   fetch(WEB_APP_URL,{cache:'no-store'})
     .then(response=>response.text())
@@ -258,7 +246,6 @@ function loadData(){
     .finally(()=>{
       isFetching=false;
       lastFetch=Date.now();
-      setSpin(false);
     });
 }
 

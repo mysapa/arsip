@@ -130,7 +130,7 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
           <i class="fa-solid fa-box-archive"></i> Surat dan Inventaris
         </h3> 
       </div> 
-      <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Live Sync 10s</span></div> 
+      <div class="sync-badge"><i class="fa-solid fa-arrows-rotate" id="syncIcon"></i><span>Sinkron saat dibuka</span></div> 
     </div> 
   </div> 
 </div>
@@ -200,8 +200,8 @@ footer{width:100%;text-align:center;padding:12px 20px;font-size:12px;font-weight
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbyHW_utJeLcP8Oxb9RvrR-et6QU78CRr-_KOtj-_glx8lSFXwwGpMV5F5Q74XNabSjm/exec';
 const CACHE_KEY='arsipMySAPA_cache_v2';
-const POLL_MS=10000;
-let currentTab='surat',globalData=null,lastRaw='',isFetching=false,pollTimer=null;
+const MIN_GAP_MS=30000; // jeda minimal antar pembaruan saat tab kembali aktif
+let currentTab='surat',globalData=null,lastRaw='',isFetching=false,lastFetch=0;
 
 window.onload=()=>{
   // Tampilkan data tersimpan (jika ada) agar halaman langsung terisi, lalu perbarui di latar belakang
@@ -215,9 +215,9 @@ window.onload=()=>{
   loadData();
 };
 
-// Saat tab kembali aktif, langsung sinkron ulang
+// Saat tab kembali aktif, sinkron ulang (dibatasi minimal 30 detik sejak pembaruan terakhir)
 document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden)loadData();
+  if(!document.hidden&&Date.now()-lastFetch>MIN_GAP_MS)loadData();
 });
 
 function readCache(){
@@ -245,22 +245,20 @@ function setSpin(on){
   if(syncIcon)syncIcon.classList.toggle('fa-spin',on);
 }
 
-/* Permintaan berikutnya dijadwalkan SETELAH permintaan sebelumnya selesai,
-   sehingga request tidak menumpuk ketika server lambat. */
+/* Data diambil sekali saat halaman dibuka (dan saat tab kembali aktif), tanpa polling berkala. */
 function loadData(){
-  clearTimeout(pollTimer);
   if(isFetching)return;
   isFetching=true;
   setSpin(true);
 
-  fetch(WEB_APP_URL)
+  fetch(WEB_APP_URL,{cache:'no-store'})
     .then(response=>response.text())
     .then(renderData)
     .catch(handleError)
     .finally(()=>{
       isFetching=false;
+      lastFetch=Date.now();
       setSpin(false);
-      pollTimer=setTimeout(()=>{if(!document.hidden)loadData();},POLL_MS);
     });
 }
 

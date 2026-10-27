@@ -295,9 +295,6 @@ function formatTanggal(val){
   const fromDate=dt=>fmt(dt.getDate(),dt.getMonth(),dt.getFullYear());
   let m;
 
-  if(val instanceof Date)return isNaN(val)?'-':fromDate(val);
-  if(typeof val==='number')return fromDate(new Date(val));
-
   const s=String(val).trim();
 
   // 2026-01-15

@@ -287,43 +287,61 @@ function handleError(err){
 const BULAN_SINGKAT=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const BULAN_INDEX={jan:0,feb:1,mar:2,apr:3,mei:4,may:4,jun:5,jul:6,agu:7,agt:7,aug:7,sep:8,okt:9,oct:9,nov:10,nop:10,des:11,dec:11};
 
-/* Ubah berbagai format tanggal menjadi "dd mmm yyyy" (contoh: 15 Jan 2026) */
-function formatTanggal(val){
-  if(val===null||val===undefined||val==='')return '-';
-
-  const fmt=(d,m,y)=>`${String(d).padStart(2,'0')} ${BULAN_SINGKAT[m]} ${y}`;
-  const fromDate=dt=>fmt(dt.getDate(),dt.getMonth(),dt.getFullYear());
-  let m;
+/* Baca berbagai format tanggal menjadi {d,m,y} (m = 0-11); null bila tidak terbaca */
+function parseTanggal(val){
+  if(val===null||val===undefined||val==='')return null;
 
   const s=String(val).trim();
+  const bagian=dt=>({d:dt.getDate(),m:dt.getMonth(),y:dt.getFullYear()});
+  let m;
 
   // 2026-01-15
-  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)))return fmt(+m[3],+m[2]-1,m[1]);
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)))return{d:+m[3],m:+m[2]-1,y:+m[1]};
 
   // 15/01/2026, 15-01-2026, 15.01.2026
-  if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/)))return fmt(+m[1],+m[2]-1,m[3]);
+  if((m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/)))return{d:+m[1],m:+m[2]-1,y:+m[3]};
 
   // 2026-01-14T16:00:00.000Z (ISO dengan jam, dikonversi ke zona waktu perangkat)
   if(/^\d{4}-\d{2}-\d{2}T/.test(s)){
     const dt=new Date(s);
-    if(!isNaN(dt))return fromDate(dt);
+    if(!isNaN(dt))return bagian(dt);
   }
 
   // Thu Jan 15 2026 00:00:00 GMT+0800 (...)  -> diambil langsung, tanpa konversi zona waktu
   if((m=s.match(/^[A-Za-z]{3},?\s+([A-Za-z]{3})[A-Za-z]*\s+(\d{1,2})\s+(\d{4})/))){
     const idx=BULAN_INDEX[m[1].toLowerCase()];
-    if(idx!==undefined)return fmt(+m[2],idx,m[3]);
+    if(idx!==undefined)return{d:+m[2],m:idx,y:+m[3]};
   }
 
   // 15 Januari 2026 / 15 Jan 2026
   if((m=s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/))){
     const idx=BULAN_INDEX[m[2].slice(0,3).toLowerCase()];
-    if(idx!==undefined)return fmt(+m[1],idx,m[3]);
+    if(idx!==undefined)return{d:+m[1],m:idx,y:+m[3]};
   }
 
   const dt=new Date(s);
-  return isNaN(dt)?s:fromDate(dt);
+  return isNaN(dt)?null:bagian(dt);
 }
+
+/* Ubah berbagai format tanggal menjadi "dd mmm yyyy" (contoh: 15 Jan 2026) */
+function formatTanggal(val){
+  if(val===null||val===undefined||val==='')return '-';
+
+  const t=parseTanggal(val);
+  return t?`${String(t.d).padStart(2,'0')} ${BULAN_SINGKAT[t.m]} ${t.y}`:String(val).trim();
+}
+
+/* Tanggal sebagai angka untuk pengurutan; kosong/tidak terbaca = 0 (paling bawah) */
+function waktuTanggal(val){
+  const t=parseTanggal(val);
+  return t?new Date(t.y,t.m,t.d).getTime():0;
+}
+
+/* Urut tanggal terbaru di atas; tanggal sama -> baris yang lebih bawah di sheet lebih dulu */
+function urutTerbaru(a,b){
+  return waktuTanggal(b.tanggal)-waktuTanggal(a.tanggal)||(b.rowIdx||0)-(a.rowIdx||0);
+}
+
 
 /* Cegah karakter HTML dari data spreadsheet merusak tampilan */
 function escapeHtml(text){
@@ -513,7 +531,7 @@ function filterTable(){
       (item.perihal&&item.perihal.toLowerCase().includes(query))||
       (item.jenisSurat&&item.jenisSurat.toLowerCase().includes(query))||
       formatTanggal(item.tanggal).toLowerCase().includes(query)
-    );
+    ).sort(urutTerbaru);
 
     document.getElementById('countSurat').innerText=filteredSurat.length;
     document.getElementById('countSP').innerText=totalSP;
@@ -527,7 +545,7 @@ function filterTable(){
       (item.noSurat&&item.noSurat.toLowerCase().includes(query))||
       (item.perihal&&item.perihal.toLowerCase().includes(query))||
       formatTanggal(item.tanggal).toLowerCase().includes(query)
-    );
+    ).sort(urutTerbaru);
 
     document.getElementById('countSurat').innerText=totalSurat;
     document.getElementById('countSP').innerText=filteredSP.length;
